@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Malla Curricular - Administración U. Aconcagua</title>
+<style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(120deg, #ffe6f0, #e6f7ff);
+        margin: 0;
+        padding: 20px;
+        color: #444;
+    }
+    h1 {
+        text-align: center;
+        color: #c04b7a;
+        margin-bottom: 30px;
+    }
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+    .year {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+    .year h2 {
+        text-align: center;
+        color: #4fa3c7;
+        margin-bottom: 10px;
+    }
+    .subject {
+        background: #fce4ec;
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: 0.2s;
+        position: relative;
+    }
+    .subject:hover {
+        transform: scale(1.02);
+    }
+    .approved {
+        background: #c8f2e0;
+        text-decoration: line-through;
+    }
+    .locked {
+        background: #ddd;
+        color: #888;
+        cursor: not-allowed;
+    }
+    .locked::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 110%;
+        left: 0;
+        background: #333;
+        color: #fff;
+        padding: 5px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.2s;
+        white-space: pre-line;
+        width: max-content;
+        max-width: 220px;
+    }
+    .locked:hover::after {
+        opacity: 1;
+    }
+</style>
+</head>
+<body>
+
+<h1>Malla Curricular – Administración (U. del Aconcagua)</h1>
+
+<div class="grid" id="malla"></div>
+
+<script>
+const materias = [
+    {id:1, nombre:"Administración I", año:1, req:[]},
+    {id:2, nombre:"Matemática I", año:1, req:[]},
+    {id:3, nombre:"Introducción al desarrollo empresarial", año:1, req:[]},
+    {id:4, nombre:"Contabilidad para administración", año:1, req:[]},
+    {id:5, nombre:"Economía", año:1, req:[]},
+    {id:6, nombre:"Derecho I", año:1, req:[]},
+
+    {id:7, nombre:"Estadística", año:2, req:[2]},
+    {id:8, nombre:"Matemática II", año:2, req:[2]},
+    {id:9, nombre:"Derecho II", año:2, req:[6]},
+    {id:12, nombre:"Economía II", año:2, req:[5]},
+    {id:10, nombre:"Administración II", año:2, req:[1]},
+    {id:11, nombre:"Costos para las decisiones", año:2, req:[4]},
+    {id:13, nombre:"Comportamiento organizacional", año:2, req:[1]},
+
+    {id:14, nombre:"Análisis de estados financieros", año:3, req:[12]},
+    {id:15, nombre:"Administración III", año:3, req:[1,10,13]},
+    {id:16, nombre:"Comercialización I", año:3, req:[10]},
+    {id:17, nombre:"Adm. financiera sector privado", año:3, req:[7,8]},
+    {id:18, nombre:"Administración de las operaciones", año:3, req:[1,11,13]},
+    {id:19, nombre:"Derecho III", año:3, req:[9]},
+    {id:20, nombre:"Comercialización II", año:3, req:[12,7,16]},
+    {id:21, nombre:"Práctica y orientación profesional", año:3, req:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]},
+
+    {id:22, nombre:"Administración estratégica", año:4, req:[11,13,15,19,20]},
+    {id:23, nombre:"Administración IV", año:4, req:[1,3,6,11,15,19]},
+    {id:24, nombre:"Formulación y evaluación de proyectos", año:4, req:[11,13,14,17,18,20]},
+    {id:25, nombre:"Adm. financiera sector público", año:4, req:[2,10,14,17,18]},
+    {id:26, nombre:"Estructura económica contemporánea", año:4, req:[10]},
+    {id:27, nombre:"Práctica y orientación profesional (Final)", año:4, req:[14,15,16,17,18,19,20,21]}
+];
+
+let aprobadas = JSON.parse(localStorage.getItem("aprobadas") || "[]");
+
+function guardar() {
+    localStorage.setItem("aprobadas", JSON.stringify(aprobadas));
+}
+
+function render() {
+    const cont = document.getElementById("malla");
+    cont.innerHTML = "";
+
+    for(let año=1;año<=4;año++){
+        const col = document.createElement("div");
+        col.className="year";
+        col.innerHTML = `<h2>${año}° Año</h2>`;
+        materias.filter(m=>m.año===año).forEach(m=>{
+            const div = document.createElement("div");
+            div.className="subject";
+            div.textContent = m.nombre;
+
+            const faltan = m.req.filter(r=>!aprobadas.includes(r));
+
+            if(faltan.length>0){
+                div.classList.add("locked");
+                div.dataset.tooltip = "Faltan:\n" + faltan.map(id=> materias.find(x=>x.id===id).nombre).join("\n");
+            } else {
+                if(aprobadas.includes(m.id)){
+                    div.classList.add("approved");
+                }
+                div.onclick = ()=>{
+                    if(aprobadas.includes(m.id)){
+                        aprobadas = aprobadas.filter(x=>x!==m.id);
+                    } else {
+                        aprobadas.push(m.id);
+                    }
+                    guardar();
+                    render();
+                };
+            }
+
+            col.appendChild(div);
+        });
+        cont.appendChild(col);
+    }
+}
+
+render();
+</script>
+</body>
+</html>
